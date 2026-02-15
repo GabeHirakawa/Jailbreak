@@ -67,6 +67,7 @@ Jailbreak is split into independent plugins that communicate via `PluginCapabili
 | **Jailbreak.Zones** | Zone management, draw/beam shapes, SQL persistence |
 | **Jailbreak.Gangs** | Gang perks (icons, colors, stats) via GangsAPI |
 | **Jailbreak.Tools** | Debug/operator commands (`css_debug`) |
+| **Jailbreak.Updater** | Auto-updates plugins from GitHub Releases |
 
 ## Building
 
@@ -83,6 +84,7 @@ dotnet publish src/Jailbreak.Fun/Jailbreak.Fun.csproj -o build/Jailbreak.Fun
 dotnet publish src/Jailbreak.Zones/Jailbreak.Zones.csproj -o build/Jailbreak.Zones
 dotnet publish src/Jailbreak.Gangs/Jailbreak.Gangs.csproj -o build/Jailbreak.Gangs
 dotnet publish src/Jailbreak.Tools/Jailbreak.Tools.csproj -o build/Jailbreak.Tools
+dotnet publish src/Jailbreak.Updater/Jailbreak.Updater.csproj -o build/Jailbreak.Updater
 ```
 
 Please use [SDK 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) or higher.

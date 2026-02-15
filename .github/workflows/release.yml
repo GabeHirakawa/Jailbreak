@@ -35,6 +35,7 @@ jobs:
           dotnet publish src/Jailbreak.Zones/Jailbreak.Zones.csproj --no-build --no-restore -o build/Jailbreak.Zones
           dotnet publish src/Jailbreak.Gangs/Jailbreak.Gangs.csproj --no-build --no-restore -o build/Jailbreak.Gangs
           dotnet publish src/Jailbreak.Tools/Jailbreak.Tools.csproj --no-build --no-restore -o build/Jailbreak.Tools
+          dotnet publish src/Jailbreak.Updater/Jailbreak.Updater.csproj --no-build --no-restore -o build/Jailbreak.Updater
 
       - uses: actions/upload-artifact@v4.0.0
         with:
