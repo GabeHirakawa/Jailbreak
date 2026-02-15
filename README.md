@@ -54,45 +54,43 @@ Configuration is done through CS#'s [FakeConVars](https://docs.cssharp.dev/examp
 You can search for the list of configurable
 convars [like so](https://github.com/search?q=repo%3Aedgegamers%2FJailbreak%20fakeconvar&type=code).
 
-## Modding
+## Architecture
 
-Want to fork Jailbreak and add in your own custom behavior? No sweat!
-The jailbreak repository is designed to act as a submodule.
+Jailbreak is split into independent plugins that communicate via `PluginCapability`:
 
-```shell
-git submodule add https://github.com/edgegamers/Jailbreak 
-```
-
-Once you have a dependency to `Jailbreak.Public`, you can add in whatever functionality
-you want from the current plugin, and choose to add in your own handlers if you wish.
-Don't forget to register them with the service container!
-
-To boot your plugin, simply iterate over all services that inherit from `IPluginBehavior`,
-as demonstrated in `src/Jailbreak/Jailbreak.cs`:
-
-```cs
-foreach (IPluginBehavior extension in _extensions)
-{
-    //	Register all event handlers on the extension object
-    RegisterAllAttributes(extension);
-
-    //	Tell the extension to start it's magic
-    extension.Start(this);
-}
-```
+| Plugin | Description |
+|--------|-------------|
+| **Jailbreak.Contracts** | Shared interfaces, extensions, and models |
+| **Jailbreak.Core** | Warden, rebel, mute, logs, last guard, teams |
+| **Jailbreak.LastRequest** | Last request system (LR types, menus, management) |
+| **Jailbreak.Fun** | Special days, roll-the-dice, rainbow effects |
+| **Jailbreak.Zones** | Zone management, draw/beam shapes, SQL persistence |
+| **Jailbreak.Gangs** | Gang perks (icons, colors, stats) via GangsAPI |
+| **Jailbreak.Tools** | Debug/operator commands (`css_debug`) |
 
 ## Building
 
-The jailbreak plugin automatically builds to `build/Jailbreak` when
-using `dotnet publish src/Jailbreak/Jailbreak.csproj`.
-Please use [SDK 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) or higher.
+```shell
+dotnet build JailbreakNew.sln
+```
 
-Note that only the `src/Jailbreak` project is intended to be built directly.
+To publish all plugins:
+
+```shell
+dotnet publish src/Jailbreak.Core/Jailbreak.Core.csproj -o build/Jailbreak.Core
+dotnet publish src/Jailbreak.LastRequest/Jailbreak.LastRequest.csproj -o build/Jailbreak.LastRequest
+dotnet publish src/Jailbreak.Fun/Jailbreak.Fun.csproj -o build/Jailbreak.Fun
+dotnet publish src/Jailbreak.Zones/Jailbreak.Zones.csproj -o build/Jailbreak.Zones
+dotnet publish src/Jailbreak.Gangs/Jailbreak.Gangs.csproj -o build/Jailbreak.Gangs
+dotnet publish src/Jailbreak.Tools/Jailbreak.Tools.csproj -o build/Jailbreak.Tools
+```
+
+Please use [SDK 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) or higher.
 
 ## Using
 
 Jailbreak requires Counter Strike Sharp. If you don't have that installed, [follow the
 install instructions here](https://docs.cssharp.dev/docs/guides/getting-started.html).
 
-Install the plugin like any other Counter Strike Sharp plugin: drop the `Jailbreak` folder into
+Install each plugin like any other Counter Strike Sharp plugin: drop each plugin folder into
 `game/csgo/addons/counterstrikesharp/plugins`.
