@@ -1,6 +1,8 @@
 using CounterStrikeSharp.API.Core;
 using Jailbreak.Fun.Commands;
 using Jailbreak.Fun.Locale;
+using Jailbreak.Fun.Services.Rainbow;
+using Jailbreak.Fun.Services.RTD;
 using Jailbreak.Fun.Services.SpecialDay;
 
 namespace Jailbreak.Fun;
@@ -12,29 +14,52 @@ public class FunPlugin : BasePlugin {
 
   private SpecialDayFactory factory = null!;
   private SpecialDayManager manager = null!;
-  private SpecialDayCommands commands = null!;
+  private SpecialDayCommands sdCommands = null!;
+
+  private RewardGenerator rewardGenerator = null!;
+  private RTDRewarder rtdRewarder = null!;
+  private RTDCommands rtdCommands = null!;
+  private RainbowService rainbow = null!;
 
   public override void Load(bool hotReload) {
-    var locale = new FunLocale();
-    var provider = new FunServiceProvider(this);
+    var sdLocale  = new FunLocale();
+    var rtdLocale = new RTDLocale();
+    var provider  = new FunServiceProvider(this);
 
-    factory  = new SpecialDayFactory(provider);
+    // SpecialDay system
+    factory = new SpecialDayFactory(provider);
     factory.Start(this);
-
-    manager  = new SpecialDayManager(factory, locale);
-    commands = new SpecialDayCommands(factory, locale, manager);
-    commands.Start(this);
+    manager    = new SpecialDayManager(factory, sdLocale);
+    sdCommands = new SpecialDayCommands(factory, sdLocale, manager);
+    sdCommands.Start(this);
 
     RegisterFakeConVars(typeof(SpecialDayManager));
-
     RegisterEventHandler<EventRoundStart>(manager.OnRoundStart);
     RegisterEventHandler<EventRoundEnd>(manager.OnRoundEnd);
 
-    AddCommand("css_sd", "Start a special day", commands.OnSpecialDayCommand);
+    AddCommand("css_sd", "Start a special day", sdCommands.OnSpecialDayCommand);
     AddCommand("css_specialday", "Start a special day",
-      commands.OnSpecialDayCommand);
+      sdCommands.OnSpecialDayCommand);
     AddCommand("css_startday", "Start a special day",
-      commands.OnSpecialDayCommand);
+      sdCommands.OnSpecialDayCommand);
+
+    // RTD system
+    rewardGenerator = new RewardGenerator();
+    rewardGenerator.Start(this);
+    rtdRewarder = new RTDRewarder();
+    rtdCommands = new RTDCommands(rtdRewarder, rewardGenerator, rtdLocale);
+
+    RegisterFakeConVars(typeof(RTDCommands));
+    RegisterEventHandler<EventPlayerSpawn>(rtdRewarder.OnSpawn);
+    RegisterEventHandler<EventRoundEnd>(rtdCommands.OnRoundEnd);
+    RegisterEventHandler<EventRoundStart>(rtdCommands.OnRoundStart);
+
+    AddCommand("css_rtd", "Roll the dice!", rtdCommands.OnRTDCommand);
+
+    // Rainbow system
+    rainbow = new RainbowService();
+    rainbow.Start(this);
+    RegisterEventHandler<EventRoundEnd>(rainbow.OnRoundEnd);
   }
 
   public override void Unload(bool hotReload) { }
