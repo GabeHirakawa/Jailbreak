@@ -22,22 +22,34 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - run: |
+      - name: Build all plugins
+        run: |
           dotnet restore
-          dotnet build src/Jailbreak/Jailbreak.csproj --no-restore
-          dotnet publish src/Jailbreak/Jailbreak.csproj --no-build --no-restore
+          dotnet build --no-restore
+
+      - name: Publish plugins
+        run: |
+          dotnet publish src/Jailbreak.Core/Jailbreak.Core.csproj --no-build --no-restore -o build/Jailbreak.Core
+          dotnet publish src/Jailbreak.LastRequest/Jailbreak.LastRequest.csproj --no-build --no-restore -o build/Jailbreak.LastRequest
+          dotnet publish src/Jailbreak.Fun/Jailbreak.Fun.csproj --no-build --no-restore -o build/Jailbreak.Fun
+          dotnet publish src/Jailbreak.Zones/Jailbreak.Zones.csproj --no-build --no-restore -o build/Jailbreak.Zones
+          dotnet publish src/Jailbreak.Gangs/Jailbreak.Gangs.csproj --no-build --no-restore -o build/Jailbreak.Gangs
+          dotnet publish src/Jailbreak.Tools/Jailbreak.Tools.csproj --no-build --no-restore -o build/Jailbreak.Tools
 
       - uses: actions/upload-artifact@v4.0.0
         with:
           name: jailbreak
-          path: build/Jailbreak
-          # If build didn't put any artifacts in the build folder, consider it an error
+          path: build/
           if-no-files-found: error
+
+      - name: Create release zip
+        run: |
+          cd build && zip -r ../Jailbreak.zip . && cd ..
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           draft: true
           fail_on_unmatched_files: true
-          files: build/Jailbreak.zip
+          files: Jailbreak.zip
           body_path: .github/release_template.md
