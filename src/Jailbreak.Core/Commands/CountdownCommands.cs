@@ -9,6 +9,7 @@ using Jailbreak.Contracts.Formatting;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Formatting.Objects;
 using Jailbreak.Contracts.Services;
+using Jailbreak.Core.Services.Mute;
 using Jailbreak.Core.Services.Stubs;
 
 namespace Jailbreak.Core.Commands;

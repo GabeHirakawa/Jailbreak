@@ -72,9 +72,31 @@ public interface IWardenSTLocale {
 
 public interface IWardenPeaceLocale {
   IView PeaceActive { get; }
+  IView UnmutedGuards { get; }
+  IView UnmutedPrisoners { get; }
+  IView MuteReminder { get; }
+  IView PeaceReminder { get; }
+  IView DeadReminder { get; }
+  IView AdminDeadReminder { get; }
   IView PeaceEnactedByAdmin(int seconds);
   IView WardenEnactedPeace(int seconds);
   IView GeneralPeaceEnacted(int seconds);
+}
+
+public interface IRebelLocale {
+  IView NoLongerRebel { get; }
+}
+
+public interface IC4Locale {
+  IView JihadC4Pickup { get; }
+  IView JihadC4Received { get; }
+  IView JihadC4Usage1 { get; }
+}
+
+public interface ILogLocale {
+  IView BeginJailbreakLogs { get; }
+  IView EndJailbreakLogs { get; }
+  IView CreateLog(params FormatObject[] objects);
 }
 
 public interface IWardenCmdMarkerLocale {

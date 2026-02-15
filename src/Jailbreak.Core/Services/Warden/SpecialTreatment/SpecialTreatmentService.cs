@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Core.Attributes.Registration;
 using Jailbreak.Contracts.Extensions;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Core.Services.State;
+using Jailbreak.Core.Services.Rebel;
 using Jailbreak.Core.Services.Stubs;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -29,10 +30,11 @@ public class SpecialTreatmentService : ISpecialTreatmentService {
   }
 
   /// <summary>
-  /// Initialize the service. Called from CorePlugin.Load().
+  /// Initialize the service with the rebel service reference.
+  /// Called from CorePlugin.Load() after RebelService is created.
   /// </summary>
-  public void Initialize() {
-    rebel = provider.GetRequiredService<IRebelService>();
+  public void Initialize(IRebelService rebelService) {
+    rebel = rebelService;
   }
 
   public bool IsSpecialTreatment(CCSPlayerController player) {

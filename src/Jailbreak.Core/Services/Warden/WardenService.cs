@@ -9,6 +9,8 @@ using Jailbreak.Contracts.Extensions;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Services;
 using Jailbreak.Contracts.Utils;
+using Jailbreak.Core.Services.Mute;
+using Jailbreak.Core.Services.Rebel;
 using Jailbreak.Core.Services.Stubs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

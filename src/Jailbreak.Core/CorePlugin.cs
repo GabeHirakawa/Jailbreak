@@ -3,6 +3,9 @@ using CounterStrikeSharp.API.Core.Capabilities;
 using Jailbreak.Contracts;
 using Jailbreak.Contracts.Services;
 using Jailbreak.Core.Services;
+using Jailbreak.Core.Services.Logs;
+using Jailbreak.Core.Services.Mute;
+using Jailbreak.Core.Services.Rebel;
 using Jailbreak.Core.Services.State;
 using Jailbreak.Core.Services.Stubs;
 using Jailbreak.Core.Services.Warden;
@@ -35,8 +38,6 @@ public class CorePlugin : BasePlugin {
         });
 
         // Create stub services for dependencies not yet migrated
-        var muteService = new StubMuteService();
-        var rebelService = new StubRebelService();
         var specialDayManager = new StubSpecialDayManager();
 
         // Create locale stubs
@@ -50,6 +51,9 @@ public class CorePlugin : BasePlugin {
         var countLocale = new StubWardenCmdCountLocale();
         var markerLocale = new StubWardenCmdMarkerLocale();
         var genericLocale = new StubGenericCmdLocale();
+        var rebelLocale = new StubRebelLocale();
+        var c4Locale = new StubC4Locale();
+        var logLocale = new StubLogLocale();
 
         // Create draw stubs
         var registry = new StubBeamShapeRegistry();
@@ -65,25 +69,74 @@ public class CorePlugin : BasePlugin {
         // Create marker settings
         var markerSettings = new WardenMarkerSettingsService(registry);
 
-        // Build a minimal service provider for ILogger + icon services
+        // Build a service provider with all services registered
         var services = new ServiceCollection();
         services.AddSingleton<IWardenMarkerSettings>(markerSettings);
         services.AddLogging();
+
+        // Pre-build provider for services that need early resolution
         var provider = services.BuildServiceProvider();
 
         // Create icon services (no-op without ITextSpawner)
         var wardenIcon = new WardenIconService(provider);
         var specialIcon = new SpecialIconService(provider);
 
+        // Create log service (needed by rebel service)
+        var playerTagHelper = new PlayerTagHelper(provider);
+        var logService = new LogService(logLocale, playerTagHelper);
+
         // Create special treatment service
         var stService = new SpecialTreatmentService(stateFactory, stLocale, provider);
 
-        // Create the warden service (replaces WardenServiceStub)
+        // Create rebel service (replaces StubRebelService)
+        var rebelService = new RebelService(rebelLocale, logService, stService);
+        rebelService.Initialize(this);
+
+        // Create mute service (replaces StubMuteService)
+        // Warden is set after construction to break circular dependency
+        var muteService = new MuteService(peaceLocale);
+
+        // Create the warden service
         var wardenService = new WardenService(
             provider.GetRequiredService<ILogger<WardenService>>(),
             wardenLocale, markerSettings, stService,
             muteService, rebelService, specialDayManager, provider);
         wardenService.Initialize(this);
+
+        // Now wire up the circular reference
+        muteService.SetWardenService(wardenService);
+        muteService.Initialize(this);
+
+        // Now that rebel and warden are available, rebuild the service provider
+        // for services that resolve lazily (PlayerTagHelper, SpecialTreatmentService)
+        var fullServices = new ServiceCollection();
+        fullServices.AddSingleton<IWardenMarkerSettings>(markerSettings);
+        fullServices.AddSingleton<IRebelService>(rebelService);
+        fullServices.AddSingleton<IWardenService>(wardenService);
+        fullServices.AddSingleton<ISpecialTreatmentService>(stService);
+        fullServices.AddSingleton<IRichLogService>(logService);
+        fullServices.AddSingleton<ILogService>(logService);
+        fullServices.AddLogging();
+        var fullProvider = fullServices.BuildServiceProvider();
+
+        // Re-create PlayerTagHelper with full provider so it can lazily resolve services
+        var fullPlayerTagHelper = new PlayerTagHelper(fullProvider);
+        var fullLogService = new LogService(logLocale, fullPlayerTagHelper);
+
+        // Initialize SpecialTreatmentService with rebel service
+        stService.Initialize(rebelService);
+
+        // But we need to update stService's provider... Instead, let's build a provider
+        // that has IRebelService and pass it. Actually, stService already has a provider
+        // without IRebelService. Let's update the Initialize pattern.
+
+        // Create C4 behavior
+        var c4Behavior = new C4Behavior(c4Locale, rebelService, fullProvider);
+        c4Behavior.Initialize(this);
+
+        // Create rebel listener
+        var rebelListener = new RebelListener(rebelService);
+        rebelListener.Initialize(this);
 
         // Create selection service
         var selectionService = new WardenSelection(stateFactory,
@@ -120,6 +173,40 @@ public class CorePlugin : BasePlugin {
         RegisterEventHandler<EventPlayerDeath>(aliveTracker.OnDeath);
         RegisterEventHandler<EventRoundEnd>(roundTracker.OnRoundEnd);
         RegisterEventHandler<EventRoundEnd>(coroutines.OnRoundEnd);
+
+        // Register mute event handlers
+        RegisterEventHandler<EventRoundStart>(muteService.OnRoundStart);
+        RegisterEventHandler<EventRoundEnd>(muteService.OnRoundEnd);
+        RegisterEventHandler<EventPlayerDeath>(muteService.OnDeath);
+
+        // Register C4 event handlers
+        RegisterEventHandler<EventRoundStart>(c4Behavior.OnRoundStart);
+        RegisterEventHandler<EventBombDropped>(c4Behavior.OnPlayerDropC4);
+        RegisterEventHandler<EventPlayerDeath>(c4Behavior.OnPlayerDeath, HookMode.Pre);
+
+        // Register log service event handlers
+        RegisterEventHandler<EventRoundEnd>(fullLogService.OnRoundEnd);
+        RegisterEventHandler<EventRoundStart>(fullLogService.OnRoundStart);
+
+        // Register log damage listeners
+        var logDamageListeners = new LogDamageListeners(fullLogService);
+        RegisterEventHandler<EventGrenadeThrown>(logDamageListeners.OnGrenadeThrown);
+        RegisterEventHandler<EventPlayerHurt>(logDamageListeners.OnPlayerHurt);
+        RegisterEventHandler<EventPlayerDeath>(logDamageListeners.OnPlayerDeath);
+
+        // Register log entity listeners
+        var logEntityListeners = new LogEntityListeners(fullLogService);
+        HookEntityOutput("func_button", "OnPressed", logEntityListeners.OnButtonPressed);
+        HookEntityOutput("func_breakable", "OnBreak", logEntityListeners.OnBreakableBroken);
+
+        // Register log entity parent listeners
+        var logEntityParentListeners = new LogEntityParentListeners(fullLogService);
+        logEntityParentListeners.Initialize(this);
+        RegisterEventHandler<EventRoundEnd>(logEntityParentListeners.OnRoundEnd);
+
+        // Register logs command
+        var logsCommand = new LogsCommand(fullLogService);
+        AddCommand("css_logs", "View game logs", logsCommand.Command_Logs);
 
         // Register commands
         var wardenCmds = new Commands.WardenCommands(wardenLocale,

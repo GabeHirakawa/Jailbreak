@@ -78,9 +78,34 @@ public class StubWardenSTLocale : IWardenSTLocale {
 public class StubWardenPeaceLocale : IWardenPeaceLocale {
   private static readonly IView Stub = new SimpleView { "..." };
   public IView PeaceActive => Stub;
+  public IView UnmutedGuards => Stub;
+  public IView UnmutedPrisoners => Stub;
+  public IView MuteReminder => Stub;
+  public IView PeaceReminder => Stub;
+  public IView DeadReminder => Stub;
+  public IView AdminDeadReminder => Stub;
   public IView PeaceEnactedByAdmin(int seconds) => Stub;
   public IView WardenEnactedPeace(int seconds) => Stub;
   public IView GeneralPeaceEnacted(int seconds) => Stub;
+}
+
+public class StubRebelLocale : IRebelLocale {
+  private static readonly IView Stub = new SimpleView { "..." };
+  public IView NoLongerRebel => Stub;
+}
+
+public class StubC4Locale : IC4Locale {
+  private static readonly IView Stub = new SimpleView { "..." };
+  public IView JihadC4Pickup => Stub;
+  public IView JihadC4Received => Stub;
+  public IView JihadC4Usage1 => Stub;
+}
+
+public class StubLogLocale : ILogLocale {
+  private static readonly IView Stub = new SimpleView { "..." };
+  public IView BeginJailbreakLogs => Stub;
+  public IView EndJailbreakLogs => Stub;
+  public IView CreateLog(params FormatObject[] objects) => Stub;
 }
 
 public class StubWardenCmdMarkerLocale : IWardenCmdMarkerLocale {

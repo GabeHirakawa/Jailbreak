@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Services;
+using Jailbreak.Core.Services.Mute;
 using Jailbreak.Core.Services.Stubs;
 
 namespace Jailbreak.Core.Commands;
