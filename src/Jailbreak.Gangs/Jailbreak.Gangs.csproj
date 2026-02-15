@@ -8,4 +8,9 @@
     <PackageReference Include="CounterStrikeSharp.API" Version="1.0.342" />
     <ProjectReference Include="..\Jailbreak.Contracts\Jailbreak.Contracts.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="GangsAPI">
+      <HintPath>..\Jailbreak.Contracts\Mixin\GangsAPI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>
