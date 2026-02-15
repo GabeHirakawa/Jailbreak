@@ -4,7 +4,7 @@ using Jailbreak.Contracts.Formatting;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Formatting.Objects;
 using Jailbreak.Contracts.Extensions;
-using Jailbreak.Core.Services.Stubs;
+using Jailbreak.Core.Locale;
 
 namespace Jailbreak.Core.Services.Logs;
 
@@ -13,11 +13,11 @@ namespace Jailbreak.Core.Services.Logs;
 /// Migrated from Jailbreak.Logs.LogsManager.
 /// </summary>
 public class LogService : IRichLogService {
-  private readonly ILogLocale locale;
+  private readonly ICoreLocale locale;
   private readonly IRichPlayerTag richPlayerTag;
   private readonly List<IView> logMessages = [];
 
-  public LogService(ILogLocale locale, IRichPlayerTag richPlayerTag) {
+  public LogService(ICoreLocale locale, IRichPlayerTag richPlayerTag) {
     this.locale = locale;
     this.richPlayerTag = richPlayerTag;
   }

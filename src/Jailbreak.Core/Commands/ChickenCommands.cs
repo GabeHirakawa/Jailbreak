@@ -5,7 +5,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Services;
-using Jailbreak.Core.Services.Stubs;
+using Jailbreak.Core.Locale;
 
 namespace Jailbreak.Core.Commands;
 
@@ -19,14 +19,11 @@ public class ChickenCommands {
       "The maximum number of chickens that the warden can spawn", 5);
 
   private readonly IWardenService warden;
-  private readonly IWardenLocale wardenLocale;
-  private readonly IWardenCmdChickenLocale locale;
+  private readonly ICoreLocale locale;
   private int chickens;
 
-  public ChickenCommands(IWardenService warden,
-    IWardenLocale wardenLocale, IWardenCmdChickenLocale locale) {
+  public ChickenCommands(IWardenService warden, ICoreLocale locale) {
     this.warden = warden;
-    this.wardenLocale = wardenLocale;
     this.locale = locale;
   }
 
@@ -41,7 +38,7 @@ public class ChickenCommands {
     if (player == null) return;
 
     if (!warden.IsWarden(player)) {
-      wardenLocale.NotWarden.ToChat(player);
+      locale.NotWarden.ToChat(player);
       return;
     }
 
@@ -52,13 +49,13 @@ public class ChickenCommands {
 
     var chicken = Utilities.CreateEntityByName<CChicken>("chicken");
     if (chicken == null || !chicken.IsValid) {
-      locale.SpawnFailed.ToChat(player);
+      locale.ChickenSpawnFailed.ToChat(player);
       return;
     }
 
     var loc = player.Pawn.Value?.AbsOrigin;
     if (loc == null) {
-      locale.SpawnFailed.ToChat(player);
+      locale.ChickenSpawnFailed.ToChat(player);
       return;
     }
 

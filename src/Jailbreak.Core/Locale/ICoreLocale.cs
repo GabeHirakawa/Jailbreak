@@ -1,13 +1,15 @@
 using CounterStrikeSharp.API.Core;
 using Jailbreak.Contracts.Formatting;
 
-namespace Jailbreak.Core.Services.Stubs;
+namespace Jailbreak.Core.Locale;
 
-// TODO: Re-enable when locale is migrated (Task 10)
-// These stub locale interfaces mirror the original Jailbreak.Formatting locale interfaces
-// but use Jailbreak.Contracts.Formatting.IView instead.
+/// <summary>
+/// Consolidated locale interface for all Core plugin messages.
+/// Replaces the 13 separate stub locale interfaces from Services/Stubs/.
+/// </summary>
+public interface ICoreLocale {
+  #region Warden
 
-public interface IWardenLocale {
   IView PickingShortly { get; }
   IView NoWardens { get; }
   IView NowFreeday { get; }
@@ -29,15 +31,19 @@ public interface IWardenLocale {
   IView MarkerPlaced();
   IView MarkerRemoved(string marker);
   IView AutoWardenToggled(bool enabled);
-}
 
-public interface IWardenCmdCountLocale {
+  #endregion
+
+  #region Warden Commands - Count
+
   IView NoMarkerSet { get; }
   IView PrisonersInMarker(int prisoners);
   IView CannotCountYet(int seconds);
-}
 
-public interface IWardenCmdOpenLocale {
+  #endregion
+
+  #region Warden Commands - Open
+
   IView CellsOpened { get; }
   IView OpeningFailed { get; }
   IView AlreadyOpened { get; }
@@ -45,32 +51,42 @@ public interface IWardenCmdOpenLocale {
   IView CellsOpenedWithPrisoners(int prisoners);
   IView CellsOpenedSnitchPrisoners(int prisoners);
   IView CannotOpenYet(int seconds);
-}
 
-public interface IWardenCmdChickenLocale {
+  #endregion
+
+  #region Warden Commands - Chicken
+
   IView ChickenSpawned { get; }
-  IView SpawnFailed { get; }
+  IView ChickenSpawnFailed { get; }
   IView TooManyChickens { get; }
-}
 
-public interface IWardenCmdSoccerLocale {
+  #endregion
+
+  #region Warden Commands - Soccer
+
   IView SoccerSpawned { get; }
-  IView SpawnFailed { get; }
+  IView SoccerSpawnFailed { get; }
   IView TooManySoccers { get; }
-}
 
-public interface IWardenCmdRollLocale {
+  #endregion
+
+  #region Warden Commands - Roll
+
   IView Roll(int roll);
-}
 
-public interface IWardenSTLocale {
-  IView Granted { get; }
-  IView Revoked { get; }
-  IView GrantedTo(CCSPlayerController player);
-  IView RevokedFrom(CCSPlayerController player);
-}
+  #endregion
 
-public interface IWardenPeaceLocale {
+  #region Special Treatment
+
+  IView STGranted { get; }
+  IView STRevoked { get; }
+  IView STGrantedTo(CCSPlayerController player);
+  IView STRevokedFrom(CCSPlayerController player);
+
+  #endregion
+
+  #region Mute / Peace
+
   IView PeaceActive { get; }
   IView UnmutedGuards { get; }
   IView UnmutedPrisoners { get; }
@@ -81,35 +97,53 @@ public interface IWardenPeaceLocale {
   IView PeaceEnactedByAdmin(int seconds);
   IView WardenEnactedPeace(int seconds);
   IView GeneralPeaceEnacted(int seconds);
-}
 
-public interface IRebelLocale {
+  #endregion
+
+  #region Rebel
+
   IView NoLongerRebel { get; }
-}
 
-public interface IC4Locale {
+  #endregion
+
+  #region C4
+
   IView JihadC4Pickup { get; }
   IView JihadC4Received { get; }
   IView JihadC4Usage1 { get; }
-}
 
-public interface ILogLocale {
+  #endregion
+
+  #region Logs
+
   IView BeginJailbreakLogs { get; }
   IView EndJailbreakLogs { get; }
   IView CreateLog(params FormatObject[] objects);
-}
 
-public interface IWardenCmdMarkerLocale {
-  IView ChangingNotEnabled { get; }
-  IView TypeChanged(string type);
-  IView ColorChanged(string color);
-}
+  #endregion
 
-public interface IGenericCmdLocale {
+  #region Warden Commands - Marker
+
+  IView MarkerChangingNotEnabled { get; }
+  IView MarkerTypeChanged(string type);
+  IView MarkerColorChanged(string color);
+
+  #endregion
+
+  #region Generic Commands
+
   IView PlayerNotFound(string query);
   IView PlayerFoundMultiple(string query);
   IView CommandOnCooldown(DateTime cooldownEndsAt);
   IView InvalidParameter(string parameter, string expected);
   IView NoPermissionMessage(string permission);
   IView Error(string message);
+
+  #endregion
+
+  #region Last Guard
+
+  IView LGStarted(CCSPlayerController lastGuard, int ctHealth, int tHealth);
+
+  #endregion
 }

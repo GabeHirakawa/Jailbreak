@@ -8,7 +8,7 @@ using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Utils;
 using Jailbreak.Contracts.Extensions;
 using Jailbreak.Contracts.Formatting.Extensions;
-using Jailbreak.Core.Services.Stubs;
+using Jailbreak.Core.Locale;
 
 namespace Jailbreak.Core.Services.Warden.Selection;
 
@@ -29,15 +29,13 @@ public class AutoWarden {
       5f);
 
   private readonly IWardenSelectionService selectionService;
-  private readonly IWardenLocale locale;
-  private readonly IGenericCmdLocale generic;
+  private readonly ICoreLocale locale;
   private BasePlugin plugin = null!;
 
   public AutoWarden(IWardenSelectionService selectionService,
-    IWardenLocale locale, IGenericCmdLocale generic) {
+    ICoreLocale locale) {
     this.selectionService = selectionService;
     this.locale = locale;
-    this.generic = generic;
   }
 
   /// <summary>
@@ -76,7 +74,7 @@ public class AutoWarden {
   public void Command_AutoWarden(CCSPlayerController? player, CommandInfo info) {
     if (player == null) return;
     if (!AdminManager.PlayerHasPermissions(player, CV_AUTOWARDEN_FLAG.Value)) {
-      generic.NoPermissionMessage(CV_AUTOWARDEN_FLAG.Value).ToChat(player);
+      locale.NoPermissionMessage(CV_AUTOWARDEN_FLAG.Value).ToChat(player);
       return;
     }
 

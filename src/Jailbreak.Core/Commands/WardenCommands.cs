@@ -7,6 +7,7 @@ using CounterStrikeSharp.API.Modules.Utils;
 using Jailbreak.Contracts.Extensions;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Services;
+using Jailbreak.Core.Locale;
 using Jailbreak.Core.Services.Stubs;
 using Jailbreak.Core.Services.Warden;
 
@@ -17,18 +18,16 @@ namespace Jailbreak.Core.Commands;
 /// Migrated from Jailbreak.Warden.Commands.WardenCommandsBehavior.
 /// </summary>
 public class WardenCommands {
-  private readonly IWardenLocale locale;
+  private readonly ICoreLocale locale;
   private readonly IWardenSelectionService queue;
   private readonly IWardenService warden;
-  private readonly IGenericCmdLocale generics;
   private readonly Dictionary<CCSPlayerController, DateTime> lastPassCommand = new();
 
-  public WardenCommands(IWardenLocale locale, IWardenSelectionService queue,
-    IWardenService warden, IGenericCmdLocale generics) {
+  public WardenCommands(ICoreLocale locale, IWardenSelectionService queue,
+    IWardenService warden) {
     this.locale = locale;
     this.queue = queue;
     this.warden = warden;
-    this.generics = generics;
   }
 
   [GameEventHandler]
@@ -70,7 +69,7 @@ public class WardenCommands {
     }
 
     if (!AdminManager.PlayerHasPermissions(player, "@css/ban")) {
-      generics.NoPermissionMessage("@css/ban").ToChat(player);
+      locale.NoPermissionMessage("@css/ban").ToChat(player);
       return;
     }
 
@@ -106,7 +105,7 @@ public class WardenCommands {
       && !AdminManager.PlayerHasPermissions(player, "@css/rcon")) {
       var cooldown = last.AddSeconds(15);
       if (DateTime.Now < cooldown) {
-        generics.CommandOnCooldown(cooldown).ToChat(player);
+        locale.CommandOnCooldown(cooldown).ToChat(player);
         return;
       }
     }

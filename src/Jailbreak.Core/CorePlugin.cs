@@ -7,6 +7,7 @@ using Jailbreak.Core.Services.Logs;
 using Jailbreak.Core.Services.Mute;
 using Jailbreak.Core.Services.Rebel;
 using Jailbreak.Core.Services.State;
+using Jailbreak.Core.Locale;
 using Jailbreak.Core.Services.Stubs;
 using Jailbreak.Core.Services.Warden;
 using Jailbreak.Core.Services.Warden.Icons;
@@ -40,20 +41,8 @@ public class CorePlugin : BasePlugin {
         // Create stub services for dependencies not yet migrated
         var specialDayManager = new StubSpecialDayManager();
 
-        // Create locale stubs
-        var wardenLocale = new StubWardenLocale();
-        var openLocale = new StubWardenCmdOpenLocale();
-        var chickenLocale = new StubWardenCmdChickenLocale();
-        var soccerLocale = new StubWardenCmdSoccerLocale();
-        var rollLocale = new StubWardenCmdRollLocale();
-        var stLocale = new StubWardenSTLocale();
-        var peaceLocale = new StubWardenPeaceLocale();
-        var countLocale = new StubWardenCmdCountLocale();
-        var markerLocale = new StubWardenCmdMarkerLocale();
-        var genericLocale = new StubGenericCmdLocale();
-        var rebelLocale = new StubRebelLocale();
-        var c4Locale = new StubC4Locale();
-        var logLocale = new StubLogLocale();
+        // Create consolidated locale
+        var locale = new CoreLocale();
 
         // Create draw stubs
         var registry = new StubBeamShapeRegistry();
@@ -83,23 +72,23 @@ public class CorePlugin : BasePlugin {
 
         // Create log service (needed by rebel service)
         var playerTagHelper = new PlayerTagHelper(provider);
-        var logService = new LogService(logLocale, playerTagHelper);
+        var logService = new LogService(locale, playerTagHelper);
 
         // Create special treatment service
-        var stService = new SpecialTreatmentService(stateFactory, stLocale, provider);
+        var stService = new SpecialTreatmentService(stateFactory, locale, provider);
 
         // Create rebel service (replaces StubRebelService)
-        var rebelService = new RebelService(rebelLocale, logService, stService);
+        var rebelService = new RebelService(locale, logService, stService);
         rebelService.Initialize(this);
 
         // Create mute service (replaces StubMuteService)
         // Warden is set after construction to break circular dependency
-        var muteService = new MuteService(peaceLocale);
+        var muteService = new MuteService(locale);
 
         // Create the warden service
         var wardenService = new WardenService(
             provider.GetRequiredService<ILogger<WardenService>>(),
-            wardenLocale, markerSettings, stService,
+            locale, markerSettings, stService,
             muteService, rebelService, specialDayManager, provider);
         wardenService.Initialize(this);
 
@@ -116,12 +105,13 @@ public class CorePlugin : BasePlugin {
         fullServices.AddSingleton<ISpecialTreatmentService>(stService);
         fullServices.AddSingleton<IRichLogService>(logService);
         fullServices.AddSingleton<ILogService>(logService);
+        fullServices.AddSingleton<ICoreLocale>(locale);
         fullServices.AddLogging();
         var fullProvider = fullServices.BuildServiceProvider();
 
         // Re-create PlayerTagHelper with full provider so it can lazily resolve services
         var fullPlayerTagHelper = new PlayerTagHelper(fullProvider);
-        var fullLogService = new LogService(logLocale, fullPlayerTagHelper);
+        var fullLogService = new LogService(locale, fullPlayerTagHelper);
 
         // Initialize SpecialTreatmentService with rebel service
         stService.Initialize(rebelService);
@@ -131,7 +121,7 @@ public class CorePlugin : BasePlugin {
         // without IRebelService. Let's update the Initialize pattern.
 
         // Create C4 behavior
-        var c4Behavior = new C4Behavior(c4Locale, rebelService, fullProvider);
+        var c4Behavior = new C4Behavior(locale, rebelService, fullProvider);
         c4Behavior.Initialize(this);
 
         // Create rebel listener
@@ -140,13 +130,13 @@ public class CorePlugin : BasePlugin {
 
         // Create selection service
         var selectionService = new WardenSelection(stateFactory,
-            wardenService, wardenLocale,
+            wardenService, locale,
             provider.GetRequiredService<ILogger<WardenSelection>>(),
             coroutines);
 
         // Create marker service
         var markerService = new WardenMarkerService(
-            wardenService, wardenLocale, shapeFactory, markerSettings);
+            wardenService, locale, shapeFactory, markerSettings);
         markerService.Initialize(this);
 
         // Create paint service
@@ -209,8 +199,8 @@ public class CorePlugin : BasePlugin {
         AddCommand("css_logs", "View game logs", logsCommand.Command_Logs);
 
         // Register commands
-        var wardenCmds = new Commands.WardenCommands(wardenLocale,
-            selectionService, wardenService, genericLocale);
+        var wardenCmds = new Commands.WardenCommands(locale,
+            selectionService, wardenService);
         RegisterEventHandler<EventRoundStart>(wardenCmds.OnRoundStart);
         RegisterEventHandler<EventPlayerDeath>(wardenCmds.OnWardenDeath);
         AddCommand("css_pass", "Pass warden", wardenCmds.Command_Pass);
@@ -220,50 +210,47 @@ public class CorePlugin : BasePlugin {
         AddCommand("css_w", "Become warden or join queue", wardenCmds.Command_Warden);
 
         var openCmds = new Commands.OpenCellsCommands(wardenService,
-            wardenLocale, openLocale, provider);
+            locale, provider);
         RegisterEventHandler<EventRoundStart>(openCmds.OnRoundStart);
         AddCommand("css_open", "Open cells", openCmds.Command_Open);
         AddCommand("css_o", "Open cells", openCmds.Command_Open);
 
         var countCmds = new Commands.CountCommands(wardenService,
-            wardenLocale, countLocale, markerService);
+            locale, markerService);
         AddCommand("css_count", "Count prisoners in marker", countCmds.Command_Count);
 
-        var chickenCmds = new Commands.ChickenCommands(wardenService,
-            wardenLocale, chickenLocale);
+        var chickenCmds = new Commands.ChickenCommands(wardenService, locale);
         RegisterEventHandler<EventRoundStart>(chickenCmds.OnRoundStart);
         AddCommand("css_chicken", "Spawn chicken", chickenCmds.Command_Toggle);
 
-        var soccerCmds = new Commands.SoccerCommands(wardenService,
-            wardenLocale, soccerLocale);
+        var soccerCmds = new Commands.SoccerCommands(wardenService, locale);
         RegisterEventHandler<EventRoundStart>(soccerCmds.OnRoundStart);
         AddCommand("css_soccer", "Spawn soccer ball", soccerCmds.Command_Toggle);
         AddCommand("css_spawnball", "Spawn soccer ball", soccerCmds.Command_Toggle);
 
-        var rollCmds = new Commands.RollCommands(wardenService,
-            rollLocale, wardenLocale, genericLocale);
+        var rollCmds = new Commands.RollCommands(wardenService, locale);
         AddCommand("css_roll", "Roll a number", rollCmds.Command_Toggle);
 
         var peaceCmds = new Commands.PeaceCommands(wardenService,
-            muteService, peaceLocale, wardenLocale, genericLocale);
+            muteService, locale);
         AddCommand("css_peace", "Invoke peace period", peaceCmds.Command_Peace);
 
         var stCmds = new Commands.SpecialTreatmentCommands(wardenService,
-            stService, genericLocale, wardenLocale);
+            stService, locale);
         AddCommand("css_treat", "Toggle special treatment", stCmds.Command_Toggle);
         AddCommand("css_st", "Toggle special treatment", stCmds.Command_Toggle);
 
         var countdownCmds = new Commands.CountdownCommands(wardenService,
-            muteService, wardenLocale, genericLocale);
+            muteService, locale);
         AddCommand("css_countdown", "Start countdown", countdownCmds.Command_Countdown);
 
-        var markerCmds = new Commands.MarkerCommands(markerLocale,
-            genericLocale, registry, markerSettings);
+        var markerCmds = new Commands.MarkerCommands(locale,
+            registry, markerSettings);
         markerCmds.Initialize(this);
         AddCommand("css_markertype", "Change marker type", markerCmds.Command_MarkerType);
         AddCommand("css_markercolor", "Change marker color", markerCmds.Command_MarkerColor);
 
-        var autoWarden = new AutoWarden(selectionService, wardenLocale, genericLocale);
+        var autoWarden = new AutoWarden(selectionService, locale);
         autoWarden.Initialize(this);
         AddCommand("css_aw", "Toggle auto-warden", autoWarden.Command_AutoWarden);
         AddCommand("css_autowarden", "Toggle auto-warden", autoWarden.Command_AutoWarden);

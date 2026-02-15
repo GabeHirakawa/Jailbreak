@@ -7,6 +7,7 @@ using CounterStrikeSharp.API.Modules.Utils;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Services;
 using Jailbreak.Contracts.Utils;
+using Jailbreak.Core.Locale;
 using Jailbreak.Core.Services.Stubs;
 using Jailbreak.Core.Services.Warden;
 
@@ -23,14 +24,12 @@ public class CountCommands {
     30, customValidators: new RangeValidator<int>(0, 300));
 
   private readonly IWardenService warden;
-  private readonly IWardenLocale msg;
-  private readonly IWardenCmdCountLocale locale;
+  private readonly ICoreLocale locale;
   private readonly IMarkerService markers;
 
-  public CountCommands(IWardenService warden, IWardenLocale msg,
-    IWardenCmdCountLocale locale, IMarkerService markers) {
+  public CountCommands(IWardenService warden, ICoreLocale locale,
+    IMarkerService markers) {
     this.warden = warden;
-    this.msg = msg;
     this.locale = locale;
     this.markers = markers;
   }
@@ -39,7 +38,7 @@ public class CountCommands {
   public void Command_Count(CCSPlayerController? executor, CommandInfo info) {
     if (executor == null) return;
     if (!warden.IsWarden(executor)) {
-      msg.NotWarden.ToChat(executor);
+      locale.NotWarden.ToChat(executor);
       return;
     }
 

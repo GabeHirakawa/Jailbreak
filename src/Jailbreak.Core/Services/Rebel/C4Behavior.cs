@@ -6,7 +6,7 @@ using CounterStrikeSharp.API.Modules.Cvars.Validators;
 using CounterStrikeSharp.API.Modules.Utils;
 using Jailbreak.Contracts.Extensions;
 using Jailbreak.Contracts.Formatting.Extensions;
-using Jailbreak.Core.Services.Stubs;
+using Jailbreak.Core.Locale;
 
 namespace Jailbreak.Core.Services.Rebel;
 
@@ -33,7 +33,7 @@ public class C4Behavior : IC4Service {
     new("css_jb_c4_damage", "Base damage to apply", 340, ConVarFlags.FCVAR_NONE,
       new RangeValidator<float>(0, 10000));
 
-  private readonly IC4Locale ic4Locale;
+  private readonly ICoreLocale locale;
   private readonly IRebelService rebelService;
   private readonly IServiceProvider provider;
 
@@ -48,9 +48,9 @@ public class C4Behavior : IC4Service {
 
   private BasePlugin? plugin;
 
-  public C4Behavior(IC4Locale ic4Locale, IRebelService rebelService,
+  public C4Behavior(ICoreLocale locale, IRebelService rebelService,
     IServiceProvider provider) {
-    this.ic4Locale = ic4Locale;
+    this.locale = locale;
     this.rebelService = rebelService;
     this.provider = provider;
   }
@@ -64,8 +64,8 @@ public class C4Behavior : IC4Service {
     var bombEntity = new CC4(player.GiveNamedItem("weapon_c4"));
     bombs.Add(bombEntity, new C4Metadata(false));
 
-    ic4Locale.JihadC4Received.ToChat(player);
-    ic4Locale.JihadC4Usage1.ToChat(player);
+    locale.JihadC4Received.ToChat(player);
+    locale.JihadC4Usage1.ToChat(player);
   }
 
   public void StartDetonationAttempt(CCSPlayerController player, float delay,

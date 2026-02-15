@@ -5,7 +5,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Services;
-using Jailbreak.Core.Services.Stubs;
+using Jailbreak.Core.Locale;
 
 namespace Jailbreak.Core.Commands;
 
@@ -19,14 +19,11 @@ public class SoccerCommands {
       "The maximum number of soccer balls that the warden can spawn", 3);
 
   private readonly IWardenService warden;
-  private readonly IWardenLocale wardenLocale;
-  private readonly IWardenCmdSoccerLocale locale;
+  private readonly ICoreLocale locale;
   private int soccerBalls;
 
-  public SoccerCommands(IWardenService warden,
-    IWardenLocale wardenLocale, IWardenCmdSoccerLocale locale) {
+  public SoccerCommands(IWardenService warden, ICoreLocale locale) {
     this.warden = warden;
-    this.wardenLocale = wardenLocale;
     this.locale = locale;
   }
 
@@ -42,7 +39,7 @@ public class SoccerCommands {
     if (player == null) return;
 
     if (!warden.IsWarden(player)) {
-      wardenLocale.NotWarden.ToChat(player);
+      locale.NotWarden.ToChat(player);
       return;
     }
 
@@ -55,13 +52,13 @@ public class SoccerCommands {
       Utilities.CreateEntityByName<CPhysicsPropMultiplayer>(
         "prop_physics_multiplayer");
     if (ball == null || !ball.IsValid) {
-      locale.SpawnFailed.ToChat(player);
+      locale.SoccerSpawnFailed.ToChat(player);
       return;
     }
 
     var loc = player.Pawn.Value?.AbsOrigin;
     if (loc == null) {
-      locale.SpawnFailed.ToChat(player);
+      locale.SoccerSpawnFailed.ToChat(player);
       return;
     }
 

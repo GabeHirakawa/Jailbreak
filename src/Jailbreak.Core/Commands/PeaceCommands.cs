@@ -5,7 +5,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Services;
 using Jailbreak.Core.Services.Mute;
-using Jailbreak.Core.Services.Stubs;
+using Jailbreak.Core.Locale;
 
 namespace Jailbreak.Core.Commands;
 
@@ -16,25 +16,20 @@ namespace Jailbreak.Core.Commands;
 public class PeaceCommands {
   private readonly IWardenService warden;
   private readonly IMuteService mute;
-  private readonly IWardenPeaceLocale peaceLocale;
-  private readonly IWardenLocale wardenLocale;
-  private readonly IGenericCmdLocale generics;
+  private readonly ICoreLocale locale;
 
   public PeaceCommands(IWardenService warden, IMuteService mute,
-    IWardenPeaceLocale peaceLocale, IWardenLocale wardenLocale,
-    IGenericCmdLocale generics) {
+    ICoreLocale locale) {
     this.warden = warden;
     this.mute = mute;
-    this.peaceLocale = peaceLocale;
-    this.wardenLocale = wardenLocale;
-    this.generics = generics;
+    this.locale = locale;
   }
 
   [ConsoleCommand("css_peace",
     "Invokes a peace period where only the warden can talk")]
   public void Command_Peace(CCSPlayerController? executor, CommandInfo info) {
     if (mute.IsPeaceEnabled()) {
-      if (executor != null) peaceLocale.PeaceActive.ToChat(executor);
+      if (executor != null) locale.PeaceActive.ToChat(executor);
       return;
     }
 
@@ -48,12 +43,12 @@ public class PeaceCommands {
 
     if (!warden.IsWarden(executor)
       && !AdminManager.PlayerHasPermissions(executor, "@css/chat")) {
-      wardenLocale.NotWarden.ToChat(executor);
+      locale.NotWarden.ToChat(executor);
       return;
     }
 
     if (DateTime.Now - mute.GetLastPeace() < TimeSpan.FromSeconds(60)) {
-      generics.CommandOnCooldown(mute.GetLastPeace().AddSeconds(60))
+      locale.CommandOnCooldown(mute.GetLastPeace().AddSeconds(60))
        .ToChat(executor);
       return;
     }

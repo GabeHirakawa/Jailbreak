@@ -8,7 +8,7 @@ using Jailbreak.Contracts.Extensions;
 using Jailbreak.Contracts.Formatting;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Core.Services.Logs;
-using Jailbreak.Core.Services.Stubs;
+using Jailbreak.Core.Locale;
 using Jailbreak.Core.Services.Warden;
 
 namespace Jailbreak.Core.Services.Rebel;
@@ -22,16 +22,16 @@ public class RebelService : IRebelService {
     new("css_jb_rebel_time", "Time to mark a rebel for", 45,
       ConVarFlags.FCVAR_NONE, new RangeValidator<int>(0, 500));
 
-  private readonly IRebelLocale notifs;
+  private readonly ICoreLocale locale;
   private readonly IRichLogService logs;
   private readonly ISpecialTreatmentService stService;
 
   private readonly Dictionary<CCSPlayerController, long> rebelTimes = new();
   private bool enabled = true;
 
-  public RebelService(IRebelLocale notifs, IRichLogService logs,
+  public RebelService(ICoreLocale locale, IRichLogService logs,
     ISpecialTreatmentService stService) {
-    this.notifs = notifs;
+    this.locale = locale;
     this.logs = logs;
     this.stService = stService;
   }
@@ -89,7 +89,7 @@ public class RebelService : IRebelService {
 
   public void UnmarkRebel(CCSPlayerController player) {
     if (rebelTimes.ContainsKey(player)) {
-      notifs.NoLongerRebel.ToChat(player);
+      locale.NoLongerRebel.ToChat(player);
       logs.Append(logs.Player(player), "is no longer a rebel.");
     }
 

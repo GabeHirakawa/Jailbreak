@@ -3,7 +3,7 @@ using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Services;
-using Jailbreak.Core.Services.Stubs;
+using Jailbreak.Core.Locale;
 
 namespace Jailbreak.Core.Commands;
 
@@ -13,18 +13,12 @@ namespace Jailbreak.Core.Commands;
 /// </summary>
 public class RollCommands {
   private readonly IWardenService warden;
-  private readonly IWardenCmdRollLocale notifications;
-  private readonly IWardenLocale wardenLocale;
-  private readonly IGenericCmdLocale generics;
+  private readonly ICoreLocale locale;
   private readonly Random rng = new();
 
-  public RollCommands(IWardenService warden,
-    IWardenCmdRollLocale notifications, IWardenLocale wardenLocale,
-    IGenericCmdLocale generics) {
+  public RollCommands(IWardenService warden, ICoreLocale locale) {
     this.warden = warden;
-    this.notifications = notifications;
-    this.wardenLocale = wardenLocale;
-    this.generics = generics;
+    this.locale = locale;
   }
 
   [ConsoleCommand("css_roll",
@@ -34,7 +28,7 @@ public class RollCommands {
     if (player == null) return;
 
     if (!warden.IsWarden(player)) {
-      wardenLocale.NotWarden.ToChat(player);
+      locale.NotWarden.ToChat(player);
       return;
     }
 
@@ -43,16 +37,16 @@ public class RollCommands {
 
     if (command.ArgCount == 3) {
       if (!int.TryParse(command.GetArg(1), out min)) {
-        generics.InvalidParameter(command.GetArg(1), "number");
+        locale.InvalidParameter(command.GetArg(1), "number");
         return;
       }
 
       if (!int.TryParse(command.GetArg(2), out max)) {
-        generics.InvalidParameter(command.GetArg(2), "number");
+        locale.InvalidParameter(command.GetArg(2), "number");
         return;
       }
     }
 
-    notifications.Roll(rng.Next(min, max)).ToAllChat();
+    locale.Roll(rng.Next(min, max)).ToAllChat();
   }
 }

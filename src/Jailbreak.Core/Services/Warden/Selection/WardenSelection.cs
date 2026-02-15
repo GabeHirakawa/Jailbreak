@@ -7,6 +7,7 @@ using Jailbreak.Contracts.Extensions;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Services;
 using Jailbreak.Core.Services.State;
+using Jailbreak.Core.Locale;
 using Jailbreak.Core.Services.Stubs;
 using Microsoft.Extensions.Logging;
 
@@ -20,7 +21,7 @@ public class WardenSelection : IWardenSelectionService {
   private readonly ICoroutines coroutines;
   private readonly IPlayerState<QueueFavorState> favor;
   private readonly HashSet<int> guaranteedWarden = [];
-  private readonly IWardenLocale locale;
+  private readonly ICoreLocale locale;
   private readonly ILogger<WardenSelection> logger;
   private readonly IPlayerState<QueueState> queue;
   private readonly IWardenService warden;
@@ -32,7 +33,7 @@ public class WardenSelection : IWardenSelectionService {
   private bool queueInactive;
 
   public WardenSelection(IPlayerStateFactory factory,
-    IWardenService warden, IWardenLocale locale,
+    IWardenService warden, ICoreLocale locale,
     ILogger<WardenSelection> logger, ICoroutines coroutines) {
     this.warden = warden;
     this.locale = locale;

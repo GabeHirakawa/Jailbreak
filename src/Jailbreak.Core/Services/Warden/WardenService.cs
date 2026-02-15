@@ -11,6 +11,7 @@ using Jailbreak.Contracts.Services;
 using Jailbreak.Contracts.Utils;
 using Jailbreak.Core.Services.Mute;
 using Jailbreak.Core.Services.Rebel;
+using Jailbreak.Core.Locale;
 using Jailbreak.Core.Services.Stubs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -81,7 +82,7 @@ public class WardenService : IWardenService {
     new HashSet<CCSPlayerController>();
 
   private readonly ILogger<WardenService> logger;
-  private readonly IWardenLocale locale;
+  private readonly ICoreLocale locale;
   private readonly IWardenMarkerSettings markerSettings;
   private readonly ISpecialTreatmentService specialTreatment;
   private readonly IMuteService mute;
@@ -100,7 +101,7 @@ public class WardenService : IWardenService {
 
   public WardenService(
     ILogger<WardenService> logger,
-    IWardenLocale locale,
+    ICoreLocale locale,
     IWardenMarkerSettings markerSettings,
     ISpecialTreatmentService specialTreatment,
     IMuteService mute,
@@ -437,7 +438,7 @@ public class WardenService : IWardenService {
       return HookResult.Continue;
     var openCmd = provider.GetService<IWardenOpenCommand>();
     if (openCmd == null) return HookResult.Continue;
-    var cmdLocale = provider.GetRequiredService<IWardenCmdOpenLocale>();
+    var cmdLocale = provider.GetRequiredService<ICoreLocale>();
 
     openCellsTimer?.Kill();
     openCellsTimer = parent.AddTimer(CV_WARDEN_AUTO_OPEN_CELLS.Value, () => {
@@ -474,7 +475,7 @@ public class WardenService : IWardenService {
   }
 
   private void baseSnitchPrisoners(int count, bool opened) {
-    var cmdLocale = provider.GetRequiredService<IWardenCmdOpenLocale>();
+    var cmdLocale = provider.GetRequiredService<ICoreLocale>();
     var msg = opened ?
       cmdLocale.CellsOpenedSnitchPrisoners(count) :
       cmdLocale.CellsOpenedWithPrisoners(count);

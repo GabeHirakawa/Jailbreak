@@ -4,7 +4,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Utils;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Services;
-using Jailbreak.Core.Services.Stubs;
+using Jailbreak.Core.Locale;
 using Jailbreak.Core.Services.Warden;
 
 namespace Jailbreak.Core.Commands;
@@ -16,16 +16,13 @@ namespace Jailbreak.Core.Commands;
 public class SpecialTreatmentCommands {
   private readonly IWardenService warden;
   private readonly ISpecialTreatmentService specialTreatment;
-  private readonly IGenericCmdLocale generic;
-  private readonly IWardenLocale wardenNotifs;
+  private readonly ICoreLocale locale;
 
   public SpecialTreatmentCommands(IWardenService warden,
-    ISpecialTreatmentService specialTreatment, IGenericCmdLocale generic,
-    IWardenLocale wardenNotifs) {
+    ISpecialTreatmentService specialTreatment, ICoreLocale locale) {
     this.warden = warden;
     this.specialTreatment = specialTreatment;
-    this.generic = generic;
-    this.wardenNotifs = wardenNotifs;
+    this.locale = locale;
   }
 
   [ConsoleCommand("css_treat",
@@ -36,7 +33,7 @@ public class SpecialTreatmentCommands {
     if (player == null) return;
 
     if (!warden.IsWarden(player)) {
-      wardenNotifs.NotWarden.ToChat(player).ToConsole(player);
+      locale.NotWarden.ToChat(player).ToConsole(player);
       return;
     }
 
@@ -50,14 +47,14 @@ public class SpecialTreatmentCommands {
      .ToList();
 
     if (eligible.Count == 0) {
-      generic.PlayerNotFound(command.GetArg(1))
+      locale.PlayerNotFound(command.GetArg(1))
        .ToChat(player)
        .ToConsole(player);
       return;
     }
 
     if (eligible.Count != 1) {
-      generic.PlayerFoundMultiple(command.GetArg(1))
+      locale.PlayerFoundMultiple(command.GetArg(1))
        .ToChat(player)
        .ToConsole(player);
       return;

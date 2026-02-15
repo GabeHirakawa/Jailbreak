@@ -7,7 +7,7 @@ using Jailbreak.Contracts.Extensions;
 using Jailbreak.Contracts.Formatting;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Services;
-using Jailbreak.Core.Services.Stubs;
+using Jailbreak.Core.Locale;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 namespace Jailbreak.Core.Services.Mute;
@@ -21,15 +21,15 @@ public class MuteService : IMuteService {
   private DateTime ctPeaceEnd = DateTime.MinValue;
   private DateTime lastPeace = DateTime.MinValue;
 
-  private readonly IWardenPeaceLocale messages;
+  private readonly ICoreLocale locale;
   private BasePlugin? parent;
   private DateTime peaceEnd = DateTime.MinValue;
 
   private Timer? prisonerTimer, guardTimer;
   private IWardenService warden = null!;
 
-  public MuteService(IWardenPeaceLocale messages) {
-    this.messages = messages;
+  public MuteService(ICoreLocale locale) {
+    this.locale = locale;
   }
 
   /// <summary>
@@ -58,16 +58,16 @@ public class MuteService : IMuteService {
 
     switch (reason) {
       case MuteReason.ADMIN:
-        messages.PeaceEnactedByAdmin(duration).ToAllChat();
+        locale.PeaceEnactedByAdmin(duration).ToAllChat();
         break;
       case MuteReason.WARDEN_TAKEN:
-        messages.GeneralPeaceEnacted(duration).ToAllChat();
+        locale.GeneralPeaceEnacted(duration).ToAllChat();
         break;
       case MuteReason.WARDEN_INVOKED:
-        messages.WardenEnactedPeace(duration).ToAllChat();
+        locale.WardenEnactedPeace(duration).ToAllChat();
         break;
       case MuteReason.INITIAL_WARDEN:
-        messages.GeneralPeaceEnacted(duration).ToAllChat();
+        locale.GeneralPeaceEnacted(duration).ToAllChat();
         break;
     }
 
@@ -117,7 +117,7 @@ public class MuteService : IMuteService {
       }))
       unmute(player);
 
-    if (guardTimer != null) messages.UnmutedGuards.ToAllChat();
+    if (guardTimer != null) locale.UnmutedGuards.ToAllChat();
     guardTimer = null;
   }
 
@@ -126,7 +126,7 @@ public class MuteService : IMuteService {
      .Where(player => player is { Team: CsTeam.Terrorist, PawnIsAlive: true }))
       unmute(player);
 
-    if (prisonerTimer != null) messages.UnmutedPrisoners.ToAllChat();
+    if (prisonerTimer != null) locale.UnmutedPrisoners.ToAllChat();
     prisonerTimer = null;
   }
 
@@ -166,14 +166,14 @@ public class MuteService : IMuteService {
 
     if (!player.PawnIsAlive && !bypassMute(player)) {
       // Normal players can't speak when dead
-      messages.DeadReminder.ToCenter(player);
+      locale.DeadReminder.ToCenter(player);
       mute(player);
       return;
     }
 
     if (isMuted(player)) {
       // Remind any muted players they're muted
-      messages.MuteReminder.ToCenter(player);
+      locale.MuteReminder.ToCenter(player);
       return;
     }
 
@@ -183,10 +183,10 @@ public class MuteService : IMuteService {
     if (IsPeaceEnabled()) {
       if (player.Team == CsTeam.CounterTerrorist && DateTime.Now >= ctPeaceEnd)
         return;
-      messages.PeaceReminder.ToCenter(player);
+      locale.PeaceReminder.ToCenter(player);
     }
 
-    if (!player.PawnIsAlive) messages.AdminDeadReminder.ToCenter(player);
+    if (!player.PawnIsAlive) locale.AdminDeadReminder.ToCenter(player);
   }
 
   private bool isMuted(CCSPlayerController player) {

@@ -7,6 +7,7 @@ using CounterStrikeSharp.API.Modules.Utils;
 using Jailbreak.Contracts.Extensions;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Services;
+using Jailbreak.Core.Locale;
 using Jailbreak.Core.Services.Stubs;
 
 namespace Jailbreak.Core.Services.Warden.Markers;
@@ -27,7 +28,7 @@ public class WardenMarkerService : IMarkerService {
     800);
 
   private readonly IWardenService warden;
-  private readonly IWardenLocale locale;
+  private readonly ICoreLocale locale;
   private readonly IBeamShapeFactory factory;
   private readonly IWardenMarkerSettings markerSettings;
 
@@ -38,7 +39,7 @@ public class WardenMarkerService : IMarkerService {
 
   private BeamedPolylineShape? placedMarker;
 
-  public WardenMarkerService(IWardenService warden, IWardenLocale locale,
+  public WardenMarkerService(IWardenService warden, ICoreLocale locale,
     IBeamShapeFactory factory, IWardenMarkerSettings markerSettings) {
     this.warden = warden;
     this.locale = locale;

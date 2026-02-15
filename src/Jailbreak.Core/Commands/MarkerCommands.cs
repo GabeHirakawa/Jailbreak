@@ -7,6 +7,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Menu;
 using Jailbreak.Contracts.Formatting.Extensions;
+using Jailbreak.Core.Locale;
 using Jailbreak.Core.Services.Stubs;
 using Jailbreak.Core.Services.Warden;
 
@@ -21,17 +22,14 @@ public class MarkerCommands {
     new("css_marker_customization_flag",
       "Permission flag required to customize your marker", "@ego/dssilver");
 
-  private readonly IWardenCmdMarkerLocale markerLocale;
-  private readonly IGenericCmdLocale generics;
+  private readonly ICoreLocale locale;
   private readonly IBeamShapeRegistry registry;
   private readonly IWardenMarkerSettings markerSettings;
   private BasePlugin plugin = null!;
 
-  public MarkerCommands(IWardenCmdMarkerLocale markerLocale,
-    IGenericCmdLocale generics, IBeamShapeRegistry registry,
+  public MarkerCommands(ICoreLocale locale, IBeamShapeRegistry registry,
     IWardenMarkerSettings markerSettings) {
-    this.markerLocale = markerLocale;
-    this.generics = generics;
+    this.locale = locale;
     this.registry = registry;
     this.markerSettings = markerSettings;
   }
@@ -49,7 +47,7 @@ public class MarkerCommands {
     if (player == null) return;
     if (!AdminManager.PlayerHasPermissions(player,
       CV_MARKER_CUSTOMIZATION_FLAG.Value)) {
-      generics.NoPermissionMessage(CV_MARKER_CUSTOMIZATION_FLAG.Value)
+      locale.NoPermissionMessage(CV_MARKER_CUSTOMIZATION_FLAG.Value)
        .ToChat(player);
       return;
     }
@@ -71,7 +69,7 @@ public class MarkerCommands {
       await Server.NextFrameAsync(() => {
         if (!player.IsValid) return;
         var value = type.ToFriendlyString();
-        markerLocale.TypeChanged(value).ToChat(player);
+        locale.MarkerTypeChanged(value).ToChat(player);
       });
     });
     MenuManager.CloseActiveMenu(player);
@@ -84,7 +82,7 @@ public class MarkerCommands {
     if (player == null) return;
     if (!AdminManager.PlayerHasPermissions(player,
       CV_MARKER_CUSTOMIZATION_FLAG.Value)) {
-      generics.NoPermissionMessage(CV_MARKER_CUSTOMIZATION_FLAG.Value)
+      locale.NoPermissionMessage(CV_MARKER_CUSTOMIZATION_FLAG.Value)
        .ToChat(player);
       return;
     }
@@ -105,7 +103,7 @@ public class MarkerCommands {
       await markerSettings.SetColorAsync(steam, color.Key);
       await Server.NextFrameAsync(() => {
         if (!player.IsValid) return;
-        markerLocale.ColorChanged(color.Key).ToChat(player);
+        locale.MarkerColorChanged(color.Key).ToChat(player);
       });
     });
     MenuManager.CloseActiveMenu(player);

@@ -7,6 +7,7 @@ using CounterStrikeSharp.API.Modules.Cvars.Validators;
 using Jailbreak.Contracts.Formatting;
 using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Services;
+using Jailbreak.Core.Locale;
 using Jailbreak.Core.Services.Stubs;
 using Jailbreak.Core.Services.Warden;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,17 +25,15 @@ public class OpenCellsCommands : IWardenOpenCommand {
     customValidators: new RangeValidator<int>(0, 300));
 
   private readonly IWardenService warden;
-  private readonly IWardenLocale msg;
-  private readonly IWardenCmdOpenLocale wardenCmdOpenMsg;
+  private readonly ICoreLocale locale;
   private readonly IZoneManager? zoneManager;
 
   public bool OpenedCells { get; set; }
 
-  public OpenCellsCommands(IWardenService warden, IWardenLocale msg,
-    IWardenCmdOpenLocale wardenCmdOpenMsg, IServiceProvider provider) {
+  public OpenCellsCommands(IWardenService warden, ICoreLocale locale,
+    IServiceProvider provider) {
     this.warden = warden;
-    this.msg = msg;
-    this.wardenCmdOpenMsg = wardenCmdOpenMsg;
+    this.locale = locale;
     zoneManager = provider.GetService<IZoneManager>();
   }
 
@@ -50,18 +49,18 @@ public class OpenCellsCommands : IWardenOpenCommand {
     if (executor != null
       && !AdminManager.PlayerHasPermissions(executor, "@css/cheats")) {
       if (!warden.IsWarden(executor)) {
-        msg.NotWarden.ToChat(executor);
+        locale.NotWarden.ToChat(executor);
         return;
       }
 
       if (RoundUtil.GetTimeElapsed() < CV_OPEN_COMMAND_COOLDOWN.Value) {
-        wardenCmdOpenMsg.CannotOpenYet(CV_OPEN_COMMAND_COOLDOWN.Value)
+        locale.CannotOpenYet(CV_OPEN_COMMAND_COOLDOWN.Value)
          .ToChat(executor);
         return;
       }
 
       if (OpenedCells) {
-        wardenCmdOpenMsg.AlreadyOpened.ToChat(executor);
+        locale.AlreadyOpened.ToChat(executor);
         return;
       }
     }
@@ -73,10 +72,10 @@ public class OpenCellsCommands : IWardenOpenCommand {
       IView message;
       if (result) {
         if (executor != null && !warden.IsWarden(executor))
-          message = wardenCmdOpenMsg.CellsOpenedBy(executor);
+          message = locale.CellsOpenedBy(executor);
         else
-          message = wardenCmdOpenMsg.CellsOpenedBy(null);
-      } else { message = wardenCmdOpenMsg.OpeningFailed; }
+          message = locale.CellsOpenedBy(null);
+      } else { message = locale.OpeningFailed; }
 
       message.ToAllChat();
     }

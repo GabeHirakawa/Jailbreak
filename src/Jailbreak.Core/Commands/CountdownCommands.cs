@@ -10,7 +10,7 @@ using Jailbreak.Contracts.Formatting.Extensions;
 using Jailbreak.Contracts.Formatting.Objects;
 using Jailbreak.Contracts.Services;
 using Jailbreak.Core.Services.Mute;
-using Jailbreak.Core.Services.Stubs;
+using Jailbreak.Core.Locale;
 
 namespace Jailbreak.Core.Commands;
 
@@ -33,17 +33,15 @@ public class CountdownCommands {
 
   private readonly IWardenService warden;
   private readonly IMuteService mute;
-  private readonly IWardenLocale wardenLocale;
-  private readonly IGenericCmdLocale generics;
+  private readonly ICoreLocale locale;
   private DateTime lastCountdown = DateTime.MinValue;
   private int countdownDuration;
 
   public CountdownCommands(IWardenService warden, IMuteService mute,
-    IWardenLocale wardenLocale, IGenericCmdLocale generics) {
+    ICoreLocale locale) {
     this.warden = warden;
     this.mute = mute;
-    this.wardenLocale = wardenLocale;
-    this.generics = generics;
+    this.locale = locale;
   }
 
   [ConsoleCommand("css_countdown", "Invokes a countdown")]
@@ -52,27 +50,27 @@ public class CountdownCommands {
 
     if (command.ArgCount == 2) {
       if (!int.TryParse(command.GetArg(1), out countdownDuration)) {
-        generics.InvalidParameter(command.GetArg(1), "number");
+        locale.InvalidParameter(command.GetArg(1), "number");
         command.ReplyToCommand("Expected a number parameter.");
         return;
       }
 
       if (countdownDuration <= 0) {
-        generics.InvalidParameter(command.GetArg(1), "number greater than 0");
+        locale.InvalidParameter(command.GetArg(1), "number greater than 0");
         command.ReplyToCommand("Expected a number greater than 0.");
         return;
       }
     }
 
     if (countdownDuration < CV_WARDEN_MIN_COUNTDOWN.Value) {
-      generics.InvalidParameter(command.GetArg(1),
+      locale.InvalidParameter(command.GetArg(1),
         $"number greater than or equal to {CV_WARDEN_MIN_COUNTDOWN.Value}");
       command.ReplyToCommand($"Expected a number greater than or equal to {CV_WARDEN_MIN_COUNTDOWN.Value}");
       return;
     }
 
     if (countdownDuration > CV_WARDEN_MAX_COUNTDOWN.Value) {
-      generics.InvalidParameter(command.GetArg(1),
+      locale.InvalidParameter(command.GetArg(1),
         $"number less than or equal to {CV_WARDEN_MAX_COUNTDOWN.Value}");
       command.ReplyToCommand($"Expected a number less than or equal to {CV_WARDEN_MAX_COUNTDOWN.Value}");
       return;
@@ -129,7 +127,7 @@ public class CountdownCommands {
     }
 
     if (DateTime.Now - lastCountdown < TimeSpan.FromSeconds(60)) {
-      generics.CommandOnCooldown(lastCountdown.AddSeconds(60))
+      locale.CommandOnCooldown(lastCountdown.AddSeconds(60))
        .ToChat(executor);
       return false;
     }
@@ -139,7 +137,7 @@ public class CountdownCommands {
       lastCountdown = DateTime.Now;
       return true;
     } else {
-      wardenLocale.NotWarden.ToChat(executor);
+      locale.NotWarden.ToChat(executor);
     }
     return false;
   }
