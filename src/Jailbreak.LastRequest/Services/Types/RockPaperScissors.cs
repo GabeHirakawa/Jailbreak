@@ -89,10 +89,10 @@ public class RockPaperScissors : AbstractLastRequest {
     State = LRState.COMPLETED;
     switch (result) {
       case LRResult.GUARD_WIN:
-        Prisoner.Pawn.Value!.CommitSuicide(false, true);
+        Prisoner.Pawn.Value?.CommitSuicide(false, true);
         break;
       case LRResult.PRISONER_WIN:
-        Guard.Pawn.Value!.CommitSuicide(false, true);
+        Guard.Pawn.Value?.CommitSuicide(false, true);
         break;
     }
 
