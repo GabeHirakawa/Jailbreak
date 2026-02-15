@@ -8,6 +8,7 @@
     <PackageReference Include="CounterStrikeSharp.API" Version="1.0.342" />
     <PackageReference Include="CS2ScreenMenuAPI" Version="2.6.0" />
     <PackageReference Include="CS2TraceRay" Version="1.0.9" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <ProjectReference Include="..\Jailbreak.Contracts\Jailbreak.Contracts.csproj" />
   </ItemGroup>
 </Project>
