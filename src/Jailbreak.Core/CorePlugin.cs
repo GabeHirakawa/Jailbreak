@@ -116,10 +116,6 @@ public class CorePlugin : BasePlugin {
         // Initialize SpecialTreatmentService with rebel service
         stService.Initialize(rebelService);
 
-        // But we need to update stService's provider... Instead, let's build a provider
-        // that has IRebelService and pass it. Actually, stService already has a provider
-        // without IRebelService. Let's update the Initialize pattern.
-
         // Create C4 behavior
         var c4Behavior = new C4Behavior(locale, rebelService, fullProvider);
         c4Behavior.Initialize(this);

@@ -438,7 +438,6 @@ public class WardenService : IWardenService {
       return HookResult.Continue;
     var openCmd = provider.GetService<IWardenOpenCommand>();
     if (openCmd == null) return HookResult.Continue;
-    var cmdLocale = provider.GetRequiredService<ICoreLocale>();
 
     openCellsTimer?.Kill();
     openCellsTimer = parent.AddTimer(CV_WARDEN_AUTO_OPEN_CELLS.Value, () => {
@@ -468,17 +467,16 @@ public class WardenService : IWardenService {
       if (CV_WARDEN_AUTO_SNITCH.Value)
         baseSnitchPrisoners(prisoners.Count, false);
       else
-        cmdLocale.CellsOpened.ToAllChat();
+        locale.CellsOpened.ToAllChat();
     });
 
     return HookResult.Continue;
   }
 
   private void baseSnitchPrisoners(int count, bool opened) {
-    var cmdLocale = provider.GetRequiredService<ICoreLocale>();
     var msg = opened ?
-      cmdLocale.CellsOpenedSnitchPrisoners(count) :
-      cmdLocale.CellsOpenedWithPrisoners(count);
+      locale.CellsOpenedSnitchPrisoners(count) :
+      locale.CellsOpenedWithPrisoners(count);
     msg.ToAllChat();
   }
 
