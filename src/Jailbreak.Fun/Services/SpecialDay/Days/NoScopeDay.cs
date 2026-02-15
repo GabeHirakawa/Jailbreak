@@ -1,0 +1,119 @@
+using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Cvars;
+using CounterStrikeSharp.API.Modules.Cvars.Validators;
+using Jailbreak.Contracts.Extensions;
+using Jailbreak.Contracts.Formatting.Extensions;
+using Jailbreak.Contracts.Models;
+using Jailbreak.Contracts.Utils;
+using Jailbreak.Contracts.Validators;
+using Jailbreak.Fun.Enums;
+using Jailbreak.Fun.Locale;
+
+namespace Jailbreak.Fun.Services.SpecialDay.Days;
+
+public class NoScopeDay(BasePlugin plugin, IServiceProvider provider)
+  : AbstractSpecialDay(plugin, provider), ISpecialDayMessageProvider {
+  public static readonly FakeConVar<string> CV_WEAPON = new(
+    "jb_sd_noscope_weapon",
+    "Weapon to give to all players, recommended it be a weapon with a scope",
+    "weapon_ssg08",
+    customValidators: new ItemValidator(allowMultiple: true));
+
+  public static readonly FakeConVar<string> CV_WEAPON_WHITELIST = new(
+    "jb_sd_noscope_allowedweapons",
+    "Weapons to allow players to use, empty for no restrictions",
+    string.Join(",",
+      WeaponTag.UTILITY.Union(new[] { "weapon_ssg08", "weapon_knife" }
+       .ToHashSet())),
+    customValidators: new ItemValidator(allowMultiple: true));
+
+  public static readonly FakeConVar<int> CV_KNIFE_DELAY = new(
+    "jb_sd_noscope_knife_delay",
+    "Time delay in seconds to give knives at, 0 to disable", 120,
+    customValidators: new RangeValidator<int>(0, 500));
+
+  public static readonly FakeConVar<float> CV_GRAVITY =
+    new("jb_sd_noscope_gravity",
+      "Gravity to set during the special day, default is 800", 200f);
+
+  public override SDType Type => SDType.NOSCOPE;
+
+  public override SpecialDaySettings Settings => new NoScopeSettings();
+
+  public ISDInstanceLocale Locale
+    => new SoloDayLocale("No Scope",
+      "Your scope broke! Fight against everyone else. No camping!");
+
+  public override void Setup() {
+    Timers[10] += () => Locale.BeginsIn(10).ToAllChat();
+    Timers[15] += () => Locale.BeginsIn(5).ToAllChat();
+    Timers[20] += Execute;
+    if (CV_KNIFE_DELAY.Value > 0)
+      Timers[CV_KNIFE_DELAY.Value] += () => {
+        foreach (var player in PlayerUtil.GetAlive())
+          player.GiveNamedItem("weapon_knife");
+      };
+    base.Setup();
+  }
+
+  public override void Execute() {
+    foreach (var player in PlayerUtil.GetAlive()) {
+      player.RemoveWeapons();
+      foreach (var weapon in CV_WEAPON.Value.Split(","))
+        player.GiveNamedItem(weapon);
+    }
+
+    Plugin.RegisterListener<Listeners.OnTick>(onTick);
+
+    base.Execute();
+    Locale.BeginsIn(0).ToAllChat();
+  }
+
+  private void onTick() {
+    foreach (var player in PlayerUtil.GetAlive()) disableScope(player);
+  }
+
+  private void disableScope(CCSPlayerController player) {
+    if (!player.IsReal()) return;
+    var pawn = player.PlayerPawn.Value;
+    if (pawn == null || !pawn.IsValid) return;
+    var weaponServices = pawn.WeaponServices;
+    if (weaponServices == null) return;
+    var activeWeapon = weaponServices.ActiveWeapon.Value;
+    if (activeWeapon == null || !activeWeapon.IsValid) return;
+    activeWeapon.NextSecondaryAttackTick = Server.TickCount + 500;
+
+    if (CV_WEAPON_WHITELIST.Value.Contains(activeWeapon.DesignerName,
+      StringComparison.CurrentCultureIgnoreCase))
+      return;
+    activeWeapon.NextPrimaryAttackTick = Server.TickCount + 500;
+  }
+
+  override protected HookResult
+    OnEnd(EventRoundEnd @event, GameEventInfo info) {
+    var result = base.OnEnd(@event, info);
+    Plugin.RemoveListener<Listeners.OnTick>(onTick);
+    return result;
+  }
+
+  private class NoScopeSettings : SpecialDaySettings {
+    public NoScopeSettings() {
+      CtTeleport = TeleportType.RANDOM;
+      TTeleport  = TeleportType.RANDOM;
+      WithFriendlyFire();
+
+      ConVarValues["sv_gravity"]        = CV_GRAVITY.Value;
+      ConVarValues["sv_infinite_ammo"]  = 2;
+      ConVarValues["mp_death_drop_gun"] = 0;
+    }
+
+    public override float FreezeTime(CCSPlayerController player) { return 1; }
+
+    public override ISet<string>? AllowedWeapons(CCSPlayerController player) {
+      return CV_WEAPON_WHITELIST.Value.Length == 0 ?
+        null :
+        CV_WEAPON_WHITELIST.Value.Split(",").ToHashSet();
+    }
+  }
+}
