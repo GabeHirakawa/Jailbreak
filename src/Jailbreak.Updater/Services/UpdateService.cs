@@ -11,6 +11,7 @@ public class UpdateService : IUpdateService {
   private readonly string _dataDir;
   private readonly string _stateFilePath;
   private readonly ILogger _logger;
+  private readonly SemaphoreSlim _checkLock = new(1, 1);
 
   public UpdateState State { get; private set; }
 
@@ -38,66 +39,71 @@ public class UpdateService : IUpdateService {
   }
 
   public async Task<bool> CheckForUpdate() {
+    if (!await _checkLock.WaitAsync(0)) return false; // skip if already running
     try {
-      var includePreRelease = _config.UpdateChannel == "prerelease";
-      var release = await _github.GetLatestRelease(includePreRelease);
+      try {
+        var includePreRelease = _config.UpdateChannel == "prerelease";
+        var release = await _github.GetLatestRelease(includePreRelease);
 
-      if (release is null) {
-        _logger.LogWarning("[Updater] Failed to fetch releases");
-        return false;
-      }
+        if (release is null) {
+          _logger.LogWarning("[Updater] Failed to fetch releases");
+          return false;
+        }
 
-      State.LastCheck = DateTime.UtcNow;
+        State.LastCheck = DateTime.UtcNow;
 
-      var remoteVersion = GitHubReleaseProvider.ParseVersion(release.TagName);
+        var remoteVersion = GitHubReleaseProvider.ParseVersion(release.TagName);
 
-      if (!IsNewerVersion(remoteVersion, State.InstalledVersion)) {
+        if (!IsNewerVersion(remoteVersion, State.InstalledVersion)) {
+          SaveState();
+          return false;
+        }
+
+        _logger.LogInformation(
+          "[Updater] New version available: {Version}", remoteVersion);
+
+        State.Status = "downloading";
         SaveState();
-        return false;
-      }
 
-      _logger.LogInformation(
-        "[Updater] New version available: {Version}", remoteVersion);
+        var stagingDir = Path.Combine(_dataDir, "staging");
+        CleanStaging();
+        Directory.CreateDirectory(stagingDir);
 
-      State.Status = "downloading";
-      SaveState();
+        var stream = await _github.DownloadAsset(release, "Jailbreak.zip");
+        if (stream is null) {
+          _logger.LogWarning("[Updater] Failed to download Jailbreak.zip");
+          State.Status = "idle";
+          SaveState();
+          return false;
+        }
 
-      var stagingDir = Path.Combine(_dataDir, "staging");
-      CleanStaging();
-      Directory.CreateDirectory(stagingDir);
+        var zipPath = Path.Combine(_dataDir, "Jailbreak.zip");
+        await using (var fs = File.Create(zipPath)) {
+          await stream.CopyToAsync(fs);
+        }
 
-      var stream = await _github.DownloadAsset(release, "Jailbreak.zip");
-      if (stream is null) {
-        _logger.LogWarning("[Updater] Failed to download Jailbreak.zip");
+        ZipFile.ExtractToDirectory(zipPath, stagingDir, overwriteFiles: true);
+        File.Delete(zipPath);
+
+        State.StagedVersion = remoteVersion;
+        State.Status = "staged";
+        SaveState();
+
+        _logger.LogInformation(
+          "[Updater] Version {Version} staged and ready", remoteVersion);
+        return true;
+      } catch (Exception ex) {
+        _logger.LogError(ex, "[Updater] Error checking for updates");
         State.Status = "idle";
         SaveState();
         return false;
       }
-
-      var zipPath = Path.Combine(_dataDir, "Jailbreak.zip");
-      await using (var fs = File.Create(zipPath)) {
-        await stream.CopyToAsync(fs);
-      }
-
-      ZipFile.ExtractToDirectory(zipPath, stagingDir, overwriteFiles: true);
-      File.Delete(zipPath);
-
-      State.StagedVersion = remoteVersion;
-      State.Status = "staged";
-      SaveState();
-
-      _logger.LogInformation(
-        "[Updater] Version {Version} staged and ready", remoteVersion);
-      return true;
-    } catch (Exception ex) {
-      _logger.LogError(ex, "[Updater] Error checking for updates");
-      State.Status = "idle";
-      SaveState();
-      return false;
+    } finally {
+      _checkLock.Release();
     }
   }
 
-  public async Task ApplyUpdate(string pluginsDirectory) {
+  public void ApplyUpdate(string pluginsDirectory) {
     if (State.Status != "staged") return;
 
     State.Status = "applying";
@@ -141,9 +147,13 @@ public class UpdateService : IUpdateService {
   }
 
   private static bool IsNewerVersion(string remote, string installed) {
-    if (Version.TryParse(NormalizeSemver(remote), out var r)
-        && Version.TryParse(NormalizeSemver(installed), out var i))
-      return r > i;
+    if (Version.TryParse(NormalizeSemver(remote), out var rv)
+        && Version.TryParse(NormalizeSemver(installed), out var iv)) {
+      if (rv != iv) return rv > iv;
+      // Base versions equal — compare full strings for pre-release ordering
+      // e.g., "2.1.0-beta.2" > "2.1.0-beta.1", and "2.1.0" > "2.1.0-beta.1"
+      return string.Compare(remote, installed, StringComparison.Ordinal) > 0;
+    }
     return string.Compare(remote, installed, StringComparison.Ordinal) > 0;
   }
 

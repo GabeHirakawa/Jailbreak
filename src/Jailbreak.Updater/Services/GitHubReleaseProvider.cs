@@ -49,7 +49,7 @@ public class GitHubReleaseProvider {
     var asset = release.Assets.FirstOrDefault(a => a.Name == assetName);
     if (asset is null) return null;
 
-    var response = await Http.GetAsync(asset.DownloadUrl);
+    var response = await Http.GetAsync(asset.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
     if (!response.IsSuccessStatusCode) return null;
 
     return await response.Content.ReadAsStreamAsync();

@@ -35,7 +35,9 @@ public class UpdateCommands {
           return;
         }
         info.ReplyToCommand(
-          $"[Updater] Will apply v{_updateService.State.StagedVersion} on map end.");
+          $"[Updater] Applying v{_updateService.State.StagedVersion}...");
+        _updateService.ApplyUpdate(_pluginsDirectory);
+        info.ReplyToCommand("[Updater] Update applied. Plugins will reload on next map.");
         break;
 
       case "status":

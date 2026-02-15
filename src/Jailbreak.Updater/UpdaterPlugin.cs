@@ -56,7 +56,7 @@ public class UpdaterPlugin : BasePlugin {
       RegisterListener<Listeners.OnMapEnd>(() => {
         // Apply staged update before map fully ends
         if (_updateService.State.Status == "staged" && _config.AutoApply) {
-          _updateService.ApplyUpdate(pluginsDirectory).GetAwaiter().GetResult();
+          _updateService.ApplyUpdate(pluginsDirectory);
         }
       });
 
